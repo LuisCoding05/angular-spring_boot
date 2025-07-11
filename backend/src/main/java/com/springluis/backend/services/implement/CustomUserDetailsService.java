@@ -4,6 +4,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.springluis.backend.config.CustomUserDetails;
 import com.springluis.backend.model.entity.User;
@@ -20,28 +21,18 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
     
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // El 'username' que recibimos aquí puede ser un email o un nombre de usuario.
+        log.debug("Buscando usuario por identificador: {}", username);
 
-        User user;
-        try {
-            user = userRepository.findByUsername(username); 
-        } catch (UsernameNotFoundException e) {
-            log.error("Usuario no encontrado: {}", username, e);
-            user = null;
-        }
+        // Buscar por email o por username usando los nuevos métodos del repositorio
+        User user = userRepository.findByEmailWithRoles(username)
+                .orElseGet(() -> userRepository.findByUsernameWithRoles(username)
+                        .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con el identificador: " + username)));
         
+        log.info("Usuario encontrado: {}", user.getUsername());
         return new CustomUserDetails(user);
     }
-    
-    // Método adicional para obtener el usuario por email (opcional)
-    public UserDetails loadUserByEmail(String email) throws UsernameNotFoundException {
-        User user;
-        try {
-            user = userRepository.findByEmail(email); 
-        } catch (UsernameNotFoundException e) {
-            log.error("Usuario no encontrado: {}", email, e);
-            user = null;
-        }
-        return new CustomUserDetails(user);
-    }
+
 }

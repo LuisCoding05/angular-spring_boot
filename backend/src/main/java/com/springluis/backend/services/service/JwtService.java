@@ -1,4 +1,4 @@
-package com.springluis.backend.security;
+package com.springluis.backend.services.service;
 
 import org.springframework.security.core.userdetails.UserDetails;
 

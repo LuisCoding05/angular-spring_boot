@@ -74,7 +74,11 @@ public class UserServiceImp implements UserService {
     public Optional<UserDto> findById(Long id) {
         try {
             log.debug("Buscando usuario por id: {}", id);
-            return userRepository.findById(id).map(userMapper::toTarget);
+            Optional<UserDto> user = userRepository.findById(id).map(userMapper::toTarget);
+            if (user.isPresent()) {
+                log.info("Usuario encontrado: {}", user.get().getUsername());
+            }
+            return user;
         } catch (Exception e) {
             if (log.isErrorEnabled()) {
                 log.error("Error al buscar usuario por id {}: {}", id, e.getMessage(), e);
@@ -83,6 +87,53 @@ public class UserServiceImp implements UserService {
         }
 
     }
+
+    @Transactional(readOnly = true)
+    public Optional<UserDto> findByUsername(String username) {
+        
+        try {
+            
+            log.debug("Buscando usuario por nombre de usuario: {}", username);
+
+            User user = userRepository.findByUsername(username);
+            if (user != null) {
+                log.info("Usuario encontrado: {}", user.getUsername());
+                return Optional.of(userMapper.toTarget(user));
+            } else {
+                log.warn("Usuario no encontrado: {}", username);
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            if (log.isErrorEnabled()) {
+                log.error("Error al buscar usuario por nombre de usuario {}: {}", username, e.getMessage(), e);
+            }
+            return Optional.empty();
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<UserDto> findByEmail(String email) {
+        
+        try {
+            
+            log.debug("Buscando usuario por email: {}", email);
+
+            User user = userRepository.findByEmail(email);
+            if (user != null) {
+                log.info("Usuario encontrado: {}", user.getUsername());
+                return Optional.of(userMapper.toTarget(user));
+            } else {
+                log.warn("Usuario no encontrado: {}", email);
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            if (log.isErrorEnabled()) {
+                log.error("Error al buscar usuario por email {}: {}", email, e.getMessage(), e);
+            }
+            return Optional.empty();
+        }
+    }
+
 
     @Override
     @Transactional(readOnly = true)

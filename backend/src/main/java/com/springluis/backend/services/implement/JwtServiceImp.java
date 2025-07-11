@@ -1,28 +1,36 @@
 package com.springluis.backend.services.implement;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
+import io.jsonwebtoken.security.Keys; 
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
-import com.springluis.backend.security.JwtService;
+import com.springluis.backend.config.properties.JwtProperties;
+import com.springluis.backend.services.service.JwtService;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class JwtServiceImp implements JwtService{
 
-    @Value("${jwt.secret:mySecretKey1234567890123456789012345678901234567890}")
-    private String secretKey;
+    private final JwtProperties jwtProperties;
+    private SecretKey secretKey;
 
-    @Value("${jwt.expiration:86400000}") // 24 horas en milisegundos
-    private long jwtExpiration;
-
+    @PostConstruct
+    public void init() {
+        byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+        log.info("Clave secreta JWT inicializada correctamente."); 
+    }
     // Extraer username del token
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -46,7 +54,7 @@ public class JwtServiceImp implements JwtService{
 
     // Generar token con claims adicionales
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        return buildToken(extraClaims, userDetails, jwtExpiration);
+        return buildToken(extraClaims, userDetails, jwtProperties.getExpiration());
     }
 
     // Construir el token
@@ -61,8 +69,8 @@ public class JwtServiceImp implements JwtService{
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSignInKey(), Jwts.SIG.HS256)
-                .compact();
+                .signWith(this.secretKey, Jwts.SIG.HS256)
+                .compact();  //error aquí
     }
 
     // Validar token
@@ -80,14 +88,10 @@ public class JwtServiceImp implements JwtService{
     private Claims extractAllClaims(String token) {
         return Jwts
                 .parser()
-                .verifyWith(getSignInKey())
+                .verifyWith(this.secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
     }
 
-    // Obtener la clave de firma
-    private SecretKey getSignInKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes());
-    }
 }
