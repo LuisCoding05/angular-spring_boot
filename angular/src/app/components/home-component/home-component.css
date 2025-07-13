@@ -1,0 +1,9 @@
+main{
+    background: #d4ff54;
+    background: linear-gradient(154deg,rgba(212, 255, 84, 1) 0%, rgba(240, 232, 149, 1) 25%, rgba(227, 200, 125, 1) 50%, rgba(247, 188, 143, 1) 75%, rgba(247, 180, 163, 1) 100%);
+}
+
+main .dark{
+    background: #b8398d;
+    background: linear-gradient(154deg,rgba(184, 57, 141, 1) 0%, rgba(189, 113, 179, 1) 25%, rgba(194, 105, 182, 1) 50%, rgba(142, 99, 173, 1) 75%, rgba(92, 65, 102, 1) 100%);
+}

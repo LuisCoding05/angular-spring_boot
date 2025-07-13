@@ -1,11 +1,30 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="utf-8">
   <title>Angular</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  
+  <!-- Script para prevenir el flash de contenido no estilizado -->
+  <script>
+    (function() {
+      // Verificar si hay un tema guardado en localStorage
+      const savedTheme = localStorage.getItem('theme');
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      // Determinar si debe aplicar el modo oscuro
+      const shouldBeDark = savedTheme === 'dark' || 
+                          (savedTheme === 'system' && systemPrefersDark) ||
+                          (!savedTheme && systemPrefersDark);
+      
+      // Aplicar la clase 'dark' si es necesario
+      if (shouldBeDark) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>

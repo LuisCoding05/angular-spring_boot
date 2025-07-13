@@ -3,9 +3,9 @@ import { HomeComponent } from './components/home-component/home-component';
 
 export const routes: Routes = [
     {
-    path: '',
-    title: 'Techflix Home Page',
-    component: HomeComponent,
+        path: '',
+        title: 'Techflix Home Page',
+        component: HomeComponent,
     },
     // {
     // path: 'dashboard',
@@ -17,4 +17,9 @@ export const routes: Routes = [
     // title: 'Techflix Login',
     // // component: Home,
     // }
+
+    { 
+        path: '**', 
+        redirectTo: '/' 
+    }
 ];
