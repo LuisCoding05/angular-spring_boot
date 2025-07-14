@@ -1,0 +1,9 @@
+#techflix-logo{
+    clip-path: circle();
+}
+
+.avatar-logo{
+    clip-path: circle();
+    height: 2rem;
+    width: auto;
+}

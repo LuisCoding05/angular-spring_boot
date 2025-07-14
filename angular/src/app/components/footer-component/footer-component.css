@@ -1,0 +1,10 @@
+#techflix-logo-footer{
+    clip-path: circle();
+    height: 8rem;
+    width: auto;
+}
+
+.social-icon{
+    height: 3rem;
+    width: auto;
+}

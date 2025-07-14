@@ -1,0 +1,7 @@
+form { display: flex; flex-direction: column; }
+label { margin-top: 10px; }
+input { margin-bottom: 10px; }
+
+#profileForm button:disabled{
+    opacity: 0.5;
+    cursor: not-allowed;}
