@@ -30,7 +30,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        
+        // Rutas públicas
+        String path = request.getRequestURI();
+        if (path.startsWith("/api/games") || path.startsWith("/api/auth") || path.startsWith("/api/public")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // Obtener el header Authorization
         final String authHeader = request.getHeader("Authorization");
         final String jwt;

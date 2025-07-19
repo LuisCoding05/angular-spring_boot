@@ -13,4 +13,9 @@ static readonly DEFAULT_AVATAR = "https://res.cloudinary.com/dlgpvjulu/image/upl
     yoga: 'Yoga',
     hiit: 'HIIT'
   };
+
+  static readonly API_PUBLIC_ENDPOINTS = [
+    "/api/games", "/api/auth", "/api/public"
+  ];
+
 }

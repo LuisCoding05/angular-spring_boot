@@ -36,11 +36,12 @@ public class SecurityConfig {
         http.cors(Customizer.withDefaults())
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                // Endpoints de autenticación (tu "login" personalizado)
+                // Endpoints libres
                 .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/auth/register").permitAll()
                 .requestMatchers("/api/auth/refresh").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/games").permitAll()
                 // Endpoints protegidos
                 .requestMatchers("/api/movies/**").authenticated()
                 .requestMatchers("/api/user/**").authenticated()

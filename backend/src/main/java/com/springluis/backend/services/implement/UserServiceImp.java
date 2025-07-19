@@ -154,4 +154,29 @@ public class UserServiceImp implements UserService {
         }
         
     }
+
+    @Transactional(readOnly = true)
+    public Optional<UserDto> findByAnyIdentifier(String identifier) {    
+        Optional<UserDto> user = Optional.empty();
+        try {
+            user = findByEmail(identifier);
+
+            if (user.isPresent()) {
+                if (log.isInfoEnabled()) {
+                    log.info("Usuario encontrado por email");
+                }
+            } else {
+                user = findByUsername(identifier);
+                if (log.isInfoEnabled()) {
+                    log.info("Usuario encontrado por username");
+                }
+            }
+        } catch (Exception e) {
+            if (log.isErrorEnabled()) {
+                log.error("Error al encontrar al usuario por cualquier id", e.getMessage(), e);
+            }
+        }
+        return user;    
+    }
+
 }

@@ -6,6 +6,7 @@ export interface ApiState<T> {
   data: T | null;
   loading: boolean;
   error: string | null;
+  errorObj?: any;
 }
 
 export interface PostApiState<T> extends ApiState<T> {
@@ -19,12 +20,13 @@ export class GenericFetchService {
   private http = inject(HttpClient);
 
   /**
-   * Crea un estado reactivo para cualquier endpoint GET
+   * Crea un estado reactivo para cualquier endpoint GET con limitador de peticiones
    * @param url - URL del endpoint
    * @param autoLoad - Si debe cargar automáticamente (default: true)
+   * @param rateLimit - Opcional: { maxRequests: number, perMilliseconds: number }
    * @returns Un BehaviorSubject con el estado de la petición
    */
-  createApiState<T>(url: string, autoLoad: boolean = true): {
+  createApiState<T>(url: string, autoLoad: boolean = true, rateLimit?: { maxRequests: number, perMilliseconds: number }): {
     state$: BehaviorSubject<ApiState<T>>;
     load: () => void;
     retry: () => void;
@@ -34,19 +36,40 @@ export class GenericFetchService {
       loading: false,
       error: null
     };
-    
     const state$ = new BehaviorSubject<ApiState<T>>(initialState);
-    
+    // --- Rate limiter ---
+    let requestTimestamps: number[] = [];
+    const isRateLimited = () => {
+      if (!rateLimit) return false;
+      const now = Date.now();
+      // Elimina timestamps fuera del intervalo
+      requestTimestamps = requestTimestamps.filter(ts => now - ts < rateLimit.perMilliseconds);
+      return requestTimestamps.length >= rateLimit.maxRequests;
+    };
     const load = () => {
+      if (isRateLimited()) {
+        state$.next({
+          ...state$.value,
+          loading: false,
+          error: `Has superado el límite de ${rateLimit?.maxRequests} peticiones cada ${Math.round((rateLimit?.perMilliseconds || 1000)/1000)} segundos.`
+        });
+        return;
+      }
+      requestTimestamps.push(Date.now());
       state$.next({ ...state$.value, loading: true, error: null });
-      
       this.http.get<T>(url).pipe(
         catchError(error => {
           console.error(`Error fetching ${url}:`, error);
+          let errorObj = null;
+          // Si el backend devuelve un objeto de error, lo guardamos
+          if (error?.error && typeof error.error === 'object') {
+            errorObj = error.error;
+          }
           state$.next({ 
             data: null, 
             loading: false, 
-            error: error.message || 'Error al cargar datos' 
+            error: error.message || 'Error al cargar datos',
+            errorObj
           });
           return of(null);
         }),
@@ -57,20 +80,17 @@ export class GenericFetchService {
         })
       ).subscribe(data => {
         if (data) {
-          state$.next({ data, loading: false, error: null });
+          state$.next({ data, loading: false, error: null, errorObj: null });
         }
       });
     };
-    
     const retry = () => {
       console.log('🔄 Reintentando...');
       load();
     };
-    
     if (autoLoad) {
       load();
     }
-    
     return { state$, load, retry };
   }
 

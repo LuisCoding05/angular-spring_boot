@@ -1,6 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../service/auth/auth-service';
+import { AppConstants } from '../const/app-constants';
 
 
 /**
@@ -10,12 +11,15 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const authToken = authService.getToken();
 
-  if (authToken) {
-    // Clona la petición y añade la cabecera de autorización.
-    const authReq = req.clone({
-      setHeaders: { Authorization: `Bearer ${authToken}` }
+  const isPublic = AppConstants.API_PUBLIC_ENDPOINTS.some(endpoint => req.url.startsWith(endpoint));
+
+  if (authToken && !isPublic) {
+    const cloned = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${authToken}`
+      }
     });
-    return next(authReq);
+    return next(cloned);
   }
 
   // Si no hay token, la petición continúa sin modificarse.

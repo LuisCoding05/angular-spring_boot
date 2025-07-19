@@ -1,5 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { GameService } from '../../service/game/game-service';
+import { RawgGame } from '../../service/game/game-service';
+import { BehaviorSubject } from 'rxjs';
 
 @Component({
   selector: 'app-home-component',
@@ -7,6 +10,19 @@ import { Component } from '@angular/core';
   templateUrl: './home-component.html',
   styleUrl: './home-component.css'
 })
-export class HomeComponent {
-  
+export class HomeComponent implements OnInit {
+  private gameService = inject(GameService);
+  games$ = this.gameService.gamesState.state$.asObservable();
+
+  ngOnInit() {
+    this.gameService.loadGames();
+    this.games$.subscribe(state => {
+      if (state.error && state.errorObj) {
+        console.log('Error recibido del backend:', state.errorObj);
+      }
+      if (state.data) {
+        console.log('Respuesta exitosa del backend:', state.data);
+      }
+    });
+  }
 }

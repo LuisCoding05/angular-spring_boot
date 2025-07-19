@@ -47,42 +47,77 @@
     <!-- Sección: Videojuegos Destacados -->
     <section class="col-span-12 mt-16">
       <h2 class="text-3xl font-bold mb-6">🎮 Videojuegos que están dando que hablar</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        <!-- Cards -->
-        <div class="bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden shadow hover:scale-105 transform transition">
-          <img src="https://picsum.photos/200?random=1" alt="Game" class="w-full h-48 object-cover" />
-          <div class="p-4">
-            <h3 class="text-xl font-semibold">Elden Ring</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">Explora un mundo oscuro y fantástico.</p>
-          </div>
-        </div>
+      
+      @if (games$ | async; as state) {
 
-        <div class="bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden shadow hover:scale-105 transform transition">
-          <img src="https://picsum.photos/200?random=2" alt="Game" class="w-full h-48 object-cover" />
-          <div class="p-4">
-            <h3 class="text-xl font-semibold">Hades II</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">Acción mitológica impresionante.</p>
+        @if (state.loading) {
+          <div class="flex justify-center items-center py-12">
+            <span class="text-lg text-gray-500 dark:text-gray-400 animate-pulse">Cargando juegos...</span>
           </div>
-        </div>
+        }
 
-        <div class="bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden shadow hover:scale-105 transform transition">
-          <img src="https://picsum.photos/200?random=3" alt="Game" class="w-full h-48 object-cover" />
-          <div class="p-4">
-            <h3 class="text-xl font-semibold">Starfield</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">Explora galaxias y construye tu historia.</p>
+        @if (state.error) {
+          <div class="text-red-600 dark:text-red-400 text-center py-8">
+            <div>Error: {{ state.error }}</div>
+            @if (state.data == null && state.error && state.error !== 'Error al cargar datos' && state.error !== 'Has superado el límite de 2 peticiones cada 5 segundos.') {
+              <div class="mt-4 text-left max-w-2xl mx-auto bg-gray-100 dark:bg-gray-800 p-4 rounded-xl shadow">
+                <h3 class="font-bold mb-2">Detalles del error:</h3>
+
+                @if (state.errorObj; as err){
+                  <div>
+                    <div><b>Tipo de excepción:</b> {{ err.exception }}</div>
+                    <div><b>Mensaje:</b> {{ err.message }}</div>
+                    <div><b>Error:</b> {{ err.error }}</div>
+                    <div><b>StackTrace:</b>
+                      <pre class="overflow-x-auto whitespace-pre-wrap text-xs bg-gray-200 dark:bg-gray-900 p-2 rounded">{{ err.stackTrace }}</pre>
+                    </div>
+                  </div>
+                }
+                @if (!state.errorObj){
+                  <div>
+                    <span class="italic">No se pudo obtener detalles del error.</span>
+                  </div>
+                }
+                
+              </div>
+            }
           </div>
-        </div>
-
-        <div class="bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden shadow hover:scale-105 transform transition">
-          <img src="https://picsum.photos/200?random=4" alt="Game" class="w-full h-48 object-cover" />
-          <div class="p-4">
-            <h3 class="text-xl font-semibold">Persona 5 Royal</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">Una joya del JRPG en Tokio.</p>
+        }
+        
+        @if (state.data && state.data.content && state.data.content.length > 0) {
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            @for (game of state.data.content; track game.id){
+              <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-lg hover:scale-105 transform transition flex flex-col h-full border border-gray-200 dark:border-gray-800">
+                <img [src]="game.background_image || 'https://via.placeholder.com/400x225?text=Sin+imagen'" [alt]="game.name" class="w-full h-48 object-cover" />
+                <div class="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 class="text-2xl font-bold mb-2 text-purple-700 dark:text-purple-400">{{ game.name }}</h3>
+                    <p class="text-gray-700 dark:text-gray-300 text-sm mb-2">Lanzamiento: <span class="font-medium">{{ game.released || 'N/A' }}</span></p>
+                    <p class="text-gray-700 dark:text-gray-300 text-sm mb-2">Rating: <span class="font-bold">{{ game.rating || 'N/A' }}</span></p>
+                    <p class="text-gray-700 dark:text-gray-300 text-sm mb-2">Metacritic: <span class="font-bold">{{ game.metacritic || 'N/A' }}</span></p>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                      @for (genre of game.genres; track genre.id) {
+                        <span class="bg-purple-200 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full text-xs font-semibold">{{ genre.name }}</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="mt-4 flex flex-wrap gap-2">
+                    <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs" *ngFor="let platform of game.platforms">{{ platform.platform?.name }}</span>
+                  </div>
+                </div>
+              </div>
+            }
           </div>
-        </div>
-      </div>
-    </section>
+        }
 
+        @if (state.data && state.data.content && state.data.content.length === 0){
+          <div class="text-center text-gray-500 dark:text-gray-400 py-8">
+            No se encontraron juegos.
+          </div>
+        }
+      }
+      </section>
+      
     <!-- Sección: Entrenamiento y Progreso -->
     <section class="col-span-12 mt-16">
       <h2 class="text-3xl font-bold mb-6">💪 Sigue tu progreso físico como un héroe</h2>
