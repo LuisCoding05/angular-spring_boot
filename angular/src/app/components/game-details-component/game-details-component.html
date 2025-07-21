@@ -1,0 +1,130 @@
+<main class="min-h-screen bg-white dark:bg-techflix-dark text-black dark:text-white px-4 py-8">
+  @if (details$ | async; as state) {
+    @if (state.loading) {
+      <div class="flex justify-center items-center h-screen">
+        <div class="animate-pulse text-2xl text-gray-500 dark:text-gray-400">Cargando detalles del juego...</div>
+      </div>
+    }
+
+    @if (state.error) {
+      <div class="text-center py-12">
+        <h2 class="text-2xl text-red-600 dark:text-red-400 mb-4">Error al cargar los detalles</h2>
+        <p class="text-gray-600 dark:text-gray-300">{{ state.error }}</p>
+        <a routerLink="/" class="mt-6 inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+          Volver al inicio
+        </a>
+      </div>
+    }
+
+    @if (state.data; as game) {
+
+        <!-- Botón para volver atrás -->
+      <div class="max-w-7xl mx-auto mb-6">
+        <button (click)="goBack()" class="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-black dark:text-white font-bold py-2 px-4 rounded-lg transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+          Volver
+        </button>
+      </div>
+
+      <div class="max-w-7xl mx-auto">
+        <!-- Header con imagen de fondo -->
+        <div class="relative rounded-2xl overflow-hidden h-64 md:h-96 mb-8 shadow-2xl">
+          <img [src]="game.background_image" [alt]="'Fondo de ' + game.name" class="absolute inset-0 w-full h-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+          <div class="absolute bottom-0 left-0 p-6 md:p-10">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-white drop-shadow-lg">{{ game.name }}</h1>
+            <p class="text-purple-300 mt-2 text-lg">{{ game.released | date:'longDate' }}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Columna principal -->
+          <div class="lg:col-span-2">
+            <!-- Descripción -->
+            <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl shadow-lg mb-8">
+              <div class="flex justify-between items-center mb-4 border-b-2 border-purple-500 pb-2">
+                <h2 class="text-2xl font-bold">Descripción</h2>
+                <!-- Selector de idioma -->
+                <div class="flex gap-2">
+                  <button (click)="setLanguage('es')" [class.bg-purple-600]="currentLanguage === 'es'" [class.text-white]="currentLanguage === 'es'" class="px-3 py-1 text-sm font-semibold rounded-md transition-colors hover:bg-purple-500">ES</button>
+                  <button (click)="setLanguage('en')" [class.bg-purple-600]="currentLanguage === 'en'" [class.text-white]="currentLanguage === 'en'" class="px-3 py-1 text-sm font-semibold rounded-md transition-colors hover:bg-purple-500">EN</button>
+                </div>
+              </div>
+              @if (currentLanguage === 'es') {
+                <div class="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300" [innerHTML]="descriptionEs"></div>
+              } @else {
+                <div class="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300" [innerHTML]="descriptionEn"></div>
+              }
+            </div>
+
+            <!-- Plataformas -->
+            <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl shadow-lg">
+              <h2 class="text-2xl font-bold mb-4 border-b-2 border-purple-500 pb-2">Plataformas</h2>
+              <div class="flex flex-wrap gap-3">
+                @for (p of game.platforms; track p.platform.id) {
+                  <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-4 py-2 rounded-full text-sm font-semibold">
+                    {{ p.platform.name }}
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Sidebar -->
+          <div class="lg:col-span-1 space-y-8">
+            <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl shadow-lg">
+              <h3 class="text-xl font-bold mb-4">Detalles</h3>
+              <ul class="space-y-3 text-gray-700 dark:text-gray-300">
+                <li class="flex justify-between"><span>Calificación:</span> <span class="font-bold text-purple-500">{{ game.rating}} / 5</span></li>
+                <li class="flex justify-between"><span>Meta crítica:</span> <span class="font-bold text-green-500">{{ (game.metacritic || 'N/A')}}</span></li>
+                @if (game.esrb_rating) {
+                  <li class="flex justify-between"><span>Clasificación ESRB:</span> <span class="font-bold">{{ game.esrb_rating.name }}</span></li>
+                }
+                @if (game.website) {
+                  <li class="flex justify-between items-center">
+                    <span>Sitio web:</span>
+                    <a [href]="game.website" target="_blank" rel="noopener noreferrer" class="text-purple-500 hover:text-purple-400 transition-colors font-semibold">
+                      Visitar
+                    </a>
+                  </li>
+                }
+              </ul>
+            </div>
+
+            @if (game.ratings && game.ratings.length > 0) {
+              <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-bold mb-4">Valoraciones de usuarios</h3>
+                <ul class="space-y-3">
+                  @for (r of game.ratings; track r.id) {
+                    <li class="capitalize">
+                      <div class="flex justify-between mb-1 text-sm font-medium text-gray-700 dark:text-gray-300" [title]="r.title">
+                        <span>{{ r.title | translateGameDetails }}</span>
+                        <span>{{ r.count }} ({{ r.percent }}%)</span>
+                      </div>
+                      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5"><div class="bg-purple-600 h-2.5 rounded-full" [style.width.%]="r.percent"></div></div>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+
+            @if (game.metacritic_platforms && game.metacritic_platforms.length > 0) {
+              <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-bold mb-4">Puntuaciones Metacritic</h3>
+                <ul class="space-y-2">
+                  @for (mp of game.metacritic_platforms; track mp.url) {
+                    <li class="flex justify-between items-center">
+                      <a [href]="mp.url" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">{{ mp.url.split('/')[4] | titlecase }}</a>
+                      <span class="bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-100 font-bold px-3 py-1 rounded-full">{{ mp.metascore }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  }
+</main>
+

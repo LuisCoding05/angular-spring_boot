@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.springluis.backend.model.dto.FavoriteGameDto;
 import com.springluis.backend.model.dto.UserDto;
 import com.springluis.backend.model.dto.api.rawg.RawgGame;
+import com.springluis.backend.model.dto.api.rawg.RawgGameDetails;
 import com.springluis.backend.model.dto.api.rawg.RawgResponse;
 import com.springluis.backend.model.entity.FavoriteGame;
 
@@ -94,5 +95,21 @@ public class GameServiceImp implements GameService {
         game.setUser(userMapper.toSource(user));
         favoriteGameRepository.save(game);
     }
-}
 
+    @Override
+    public RawgGameDetails findGameById(Long id) {
+        String url = UriComponentsBuilder.fromUriString("https://api.rawg.io/api/games/{id}")
+                .queryParam("key", apiKey)
+                .buildAndExpand(id)
+                .toUriString();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Fetching game details from URL: {}", url);
+        }
+
+        ResponseEntity<RawgGameDetails> response = restTemplate.exchange(
+                url, HttpMethod.GET, null, new ParameterizedTypeReference<RawgGameDetails>() {});
+
+        return response.getBody();
+    }
+}

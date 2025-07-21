@@ -1,0 +1,6 @@
+/* Para asegurar que los estilos de prose (Tailwind Typography) se apliquen correctamente al contenido HTML */
+::ng-deep .prose {
+  h1, h2, h3, h4, h5, h6 {
+    color: inherit;
+  }
+}

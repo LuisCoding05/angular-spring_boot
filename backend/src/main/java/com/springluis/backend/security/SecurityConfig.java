@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/register").permitAll()
                 .requestMatchers("/api/auth/refresh").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
-                .requestMatchers("/api/games").permitAll()
+                .requestMatchers("/api/games/**").permitAll()
                 // Endpoints protegidos
                 .requestMatchers("/api/movies/**").authenticated()
                 .requestMatchers("/api/user/**").authenticated()

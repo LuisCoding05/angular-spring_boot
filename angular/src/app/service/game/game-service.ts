@@ -16,6 +16,47 @@ export interface RawgGame {
   stores: any[];
 }
 
+export interface EsrbRating {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface MetacriticPlatform {
+  metascore: number;
+  url: string;
+}
+
+export interface PlatformDetails {
+  platform: { id: number; name: string; slug: string; };
+  released_at: string;
+  requirements: { minimum: string; recommended: string; };
+}
+
+export interface Rating {
+  id: number;
+  title: string;
+  count: number;
+  percent: number;
+}
+
+export interface RawgGameDetails {
+  id: number;
+  slug: string;
+  name: string;
+  description: string;
+  metacritic: number;
+  released: string;
+  background_image: string;
+  background_image_additional: string;
+  website: string;
+  rating: number;
+  esrb_rating: EsrbRating;
+  ratings: Rating[];
+  platforms: PlatformDetails[];
+  metacritic_platforms: MetacriticPlatform[];
+}
+
 export interface RawgResponse {
   count: number;
   next: string;
@@ -71,5 +112,14 @@ export class GameService {
         error: error?.message || 'Error al cargar juegos'
       });
     }
+  }
+
+  /**
+   * Carga los detalles de un juego específico por ID.
+   * No usa limitador de peticiones, ya que es una acción puntual del usuario.
+   */
+  loadGameDetails(id: number) {
+    const url = `${AppConstants.API_BASE_URL}${this.apiUrl}/${id}`;
+    return this.fetchService.createApiState<RawgGameDetails>(url, true);
   }
 }

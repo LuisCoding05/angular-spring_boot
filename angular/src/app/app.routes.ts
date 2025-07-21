@@ -3,6 +3,7 @@ import { HomeComponent } from './components/home-component/home-component';
 import { LoginComponent } from './components/login-component/login-component';
 import { DashboardComponent } from './components/dashboard-component/dashboard-component';
 import { CanActivateGuard } from './guard/canActivate/can-activate-guard';
+import { GameDetailsComponent } from './components/game-details-component/game-details-component';
 
 export const routes: Routes = [
     {
@@ -24,12 +25,14 @@ export const routes: Routes = [
     ]
 
     },
-    
     {
-    path: 'login',
-    title: 'Techflix Login',
-    component: LoginComponent,
+        path: 'login',
+        title: 'Techflix Login',
+        component: LoginComponent,
     },
+    { path: 'game/:id',
+        title: 'Techflix Game Details',
+        component: GameDetailsComponent },
 
     { 
         path: '**', 

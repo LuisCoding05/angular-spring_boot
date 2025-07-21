@@ -3,10 +3,11 @@ import { Component, OnInit, inject } from '@angular/core';
 import { GameService } from '../../service/game/game-service';
 import { RawgGame } from '../../service/game/game-service';
 import { BehaviorSubject } from 'rxjs';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-home-component',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './home-component.html',
   styleUrl: './home-component.css'
 })
