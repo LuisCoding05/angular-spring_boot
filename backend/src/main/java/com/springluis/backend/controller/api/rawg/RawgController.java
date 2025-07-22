@@ -77,8 +77,9 @@ public class RawgController {
 
     @PostMapping("/add-to-favorites")
     public ResponseEntity<?> addFavoriteGame(@RequestBody FavoriteGameDto dto, @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
-        
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        log.info("Adding favorite game: {}", dto);
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("El token de autorización es inválido o no se proporcionó.");
         }
 
@@ -86,5 +87,17 @@ public class RawgController {
         final String username = jwtService.extractUsername(token);
         gameService.addFavoriteGame(dto, username);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+        } catch (Exception e) {
+            log.error("Error adding favorite game: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new java.util.HashMap<String, Object>() {{
+                    put("error", "Error adding favorite game.");
+                    put("exception", e.getClass().getName());
+                    put("message", e.getMessage());
+                    put("stackTrace", e.getStackTrace());
+                }}
+            );
+        }
+
     }
 }

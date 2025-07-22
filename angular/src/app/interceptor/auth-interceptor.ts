@@ -13,7 +13,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const isPublic = AppConstants.API_PUBLIC_ENDPOINTS.some(endpoint => req.url.startsWith(endpoint));
 
-  if (authToken && !isPublic) {
+  if (authToken && (!isPublic || req.url.includes("add-to-favorites"))) {
+    console.log(`Añadiendo token ${authToken} a la petición:`, req.url);
     const cloned = req.clone({
       setHeaders: {
         Authorization: `Bearer ${authToken}`

@@ -10,8 +10,11 @@ import com.springluis.backend.model.entity.User;
 @Component("favoriteGameMapper")
 public class FavoriteGameMapper implements Mapper<FavoriteGame, FavoriteGameDto> {
 
-    @Qualifier("userMapper")
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
+
+    public FavoriteGameMapper(@Qualifier("userMapper") UserMapper userMapper) {
+        this.userMapper = userMapper;
+    }
 
     @Override
     public FavoriteGameDto toTarget(FavoriteGame source) {
@@ -19,7 +22,7 @@ public class FavoriteGameMapper implements Mapper<FavoriteGame, FavoriteGameDto>
             return null;
         }
         return FavoriteGameDto.builder()
-                .id(source.getId())
+                .id( source.getId() == 0 ? null : source.getId())
                 .rawgId(source.getRawgId())
                 .title(source.getTitle())
                 .releaseDate(source.getReleaseDate())
@@ -41,13 +44,13 @@ public class FavoriteGameMapper implements Mapper<FavoriteGame, FavoriteGameDto>
         User user = target.getUserDto() != null ? userMapper.toSource(target.getUserDto()) : null;
 
         return FavoriteGame.builder()
-                .id(target.getId())
+                .id(target.getId() == 0 ? null : target.getId())
                 .rawgId(target.getRawgId())
                 .title(target.getTitle())
                 .releaseDate(target.getReleaseDate())
                 .backgroundImage(target.getBackgroundImage())
                 .rawgRating(target.getRawgRating())
-                .personalReview(target.getPersonalReview())
+                .personalReview(target.getPersonalReview() != null ? target.getPersonalReview() : "")
                 .personalRating(target.getPersonalRating())
                 .platforms(target.getPlatforms())
                 .user(user)

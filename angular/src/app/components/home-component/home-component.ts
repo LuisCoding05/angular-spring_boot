@@ -4,6 +4,7 @@ import { GameService } from '../../service/game/game-service';
 import { RawgGame } from '../../service/game/game-service';
 import { BehaviorSubject } from 'rxjs';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../service/auth/auth-service';
 
 @Component({
   selector: 'app-home-component',
@@ -14,6 +15,8 @@ import { RouterLink } from '@angular/router';
 export class HomeComponent implements OnInit {
   private gameService = inject(GameService);
   games$ = this.gameService.gamesState.state$.asObservable();
+  addFavoriteState$ = this.gameService.addFavoriteState.state$.asObservable();
+  authService = inject(AuthService);
 
   ngOnInit() {
     this.gameService.loadGames();
@@ -25,5 +28,9 @@ export class HomeComponent implements OnInit {
         console.log('Respuesta exitosa del backend:', state.data);
       }
     });
+  }
+
+  addToFavorites(game: any) {
+    this.gameService.addGameToFavorites(game);
   }
 }

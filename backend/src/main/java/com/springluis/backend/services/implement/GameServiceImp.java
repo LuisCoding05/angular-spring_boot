@@ -1,6 +1,7 @@
 package com.springluis.backend.services.implement;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,6 +29,7 @@ import com.springluis.backend.model.dto.UserDto;
 import com.springluis.backend.model.dto.api.rawg.RawgGame;
 import com.springluis.backend.model.dto.api.rawg.RawgGameDetails;
 import com.springluis.backend.model.dto.api.rawg.RawgResponse;
+import com.springluis.backend.model.entity.User;
 import com.springluis.backend.model.entity.FavoriteGame;
 
 @Slf4j
@@ -88,11 +90,22 @@ public class GameServiceImp implements GameService {
 
     @Override
     public void addFavoriteGame(FavoriteGameDto dto, String userId) {
-        UserDto user = userService.findByAnyIdentifier(userId)
+        UserDto userDto = userService.findByAnyIdentifier(userId)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        
+        User user = userMapper.toSource(userDto);
+
+        // Evitar duplicados
+        boolean gameExists = favoriteGameRepository.findByUserId(user.getId())
+            .stream()
+            .anyMatch(favGame -> favGame.getRawgId().equals(dto.getRawgId()));
+
+        if (gameExists) {
+            throw new IllegalStateException("El juego ya está en la lista de favoritos.");
+        }
 
         FavoriteGame game = gameMapper.toSource(dto);
-        game.setUser(userMapper.toSource(user));
+        game.setUser(user);
         favoriteGameRepository.save(game);
     }
 
@@ -111,5 +124,13 @@ public class GameServiceImp implements GameService {
                 url, HttpMethod.GET, null, new ParameterizedTypeReference<RawgGameDetails>() {});
 
         return response.getBody();
+    }
+
+    @Override
+    public List<FavoriteGameDto> findFavoritesByUserId(Long userId) {
+        List<FavoriteGame> favorites = favoriteGameRepository.findByUserId(userId);
+        return favorites.stream()
+                .map(gameMapper::toTarget)
+                .collect(Collectors.toList());
     }
 }

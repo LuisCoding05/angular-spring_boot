@@ -21,7 +21,7 @@ export const routes: Routes = [
         { path: 'index', component: DashboardComponent },
     //   { path: 'profile', component: ProfileComponent },
     //   { path: 'security', component: SecurityComponent },
-      { path: '', redirectTo: 'index', pathMatch: 'full' }
+        { path: '', redirectTo: 'index', pathMatch: 'full' }
     ]
 
     },

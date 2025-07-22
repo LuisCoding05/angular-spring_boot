@@ -42,7 +42,7 @@ public class FavoriteGame {
     @Column(nullable = false)
     private Double rawgRating;
     
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = true)
     private String personalReview;
 
     @Column(name = "personal_rating")
