@@ -14,6 +14,8 @@ import com.springluis.backend.services.implement.JwtServiceImp;
 import com.springluis.backend.model.dto.FavoriteGameDto;
 import com.springluis.backend.model.dto.api.rawg.RawgGame;
 import com.springluis.backend.model.dto.api.rawg.RawgGameDetails;
+import com.springluis.backend.model.dto.error.PersonalizedErrorResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -64,21 +66,17 @@ public class RawgController {
             return ResponseEntity.ok(game);
         } catch (Exception e) {
             log.error("Error retrieving game with id {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                new java.util.HashMap<String, Object>() {{
-                    put("error", "Error retrieving game details.");
-                    put("exception", e.getClass().getName());
-                    put("message", e.getMessage());
-                    put("stackTrace", e.getStackTrace());
-                }}
-            );
+            
+            PersonalizedErrorResponse error = new PersonalizedErrorResponse("Error recuperando los detalles de juego.", e.getMessage(), e.getClass().getName(), e.getStackTrace().toString());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 
     @PostMapping("/add-to-favorites")
     public ResponseEntity<?> addFavoriteGame(@RequestBody FavoriteGameDto dto, @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
-        
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        log.info("Adding favorite game: {}", dto);
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("El token de autorización es inválido o no se proporcionó.");
         }
 
@@ -86,5 +84,11 @@ public class RawgController {
         final String username = jwtService.extractUsername(token);
         gameService.addFavoriteGame(dto, username);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+        } catch (Exception e) {
+            PersonalizedErrorResponse error = new PersonalizedErrorResponse("Error agregando nuevo juego favorito.", e.getMessage(), e.getClass().getName(), e.getStackTrace().toString());
+            log.error("Error adding favorite game: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+
     }
 }

@@ -1,8 +1,11 @@
 package com.springluis.backend.services.implement;
 
 import com.springluis.backend.config.constant.AppConstants;
+import com.springluis.backend.mapper.FavoriteGameMapper;
 import com.springluis.backend.mapper.UserMapper;
+import com.springluis.backend.model.dto.FavoriteGameDto;
 import com.springluis.backend.model.dto.UserDto;
+import com.springluis.backend.model.dto.UserExtractDto;
 import com.springluis.backend.model.entity.User;
 import com.springluis.backend.repository.UserRepository;
 import com.springluis.backend.security.Encriptar;
@@ -29,12 +32,16 @@ public class UserServiceImp implements UserService {
     @Qualifier("userMapper")
     private final UserMapper userMapper;
 
+    @Qualifier("favoriteGameMapper")
+    private final FavoriteGameMapper gameMapper;
+
     @Autowired
     private final UserRepository userRepository;
     
-    public UserServiceImp(@Qualifier("userMapper") UserMapper userMapper, UserRepository userRepository) {
+    public UserServiceImp(@Qualifier("userMapper") UserMapper userMapper, UserRepository userRepository, @Qualifier("favoriteGameMapper") FavoriteGameMapper gameMapper) {
         this.userMapper = userMapper;
         this.userRepository = userRepository;
+        this.gameMapper = gameMapper;
     }
 
     @Override
@@ -156,6 +163,30 @@ public class UserServiceImp implements UserService {
     }
 
     @Transactional(readOnly = true)
+    public List<FavoriteGameDto> findAllUserGames(String identifier) {
+
+        try {
+            log.debug("Buscando todos los juegos del usuario {}", identifier);
+            Optional<UserDto> user = findByAnyIdentifier(identifier);
+            if (!user.isPresent()) {
+                log.warn("Usuario no encontrado para el identificador: {}", identifier);
+                return Collections.emptyList();
+            }
+            Long userId = user.get().getId();
+            return userRepository.findUserGames(userId).stream()
+                .map(gameMapper::toTarget)
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+
+            if (log.isErrorEnabled()) {
+                log.error("Error al buscar todos los usuarios: {}", e.getMessage(), e);
+            }
+            return Collections.emptyList();
+        }
+        
+    }
+
+    @Transactional(readOnly = true)
     public Optional<UserDto> findByAnyIdentifier(String identifier) {    
         Optional<UserDto> user = Optional.empty();
         try {
@@ -167,8 +198,13 @@ public class UserServiceImp implements UserService {
                 }
             } else {
                 user = findByUsername(identifier);
-                if (log.isInfoEnabled()) {
+                if (log.isInfoEnabled() && user.isPresent()) {
                     log.info("Usuario encontrado por username");
+                } else{
+                    if (log.isWarnEnabled()) {
+                        log.warn("Usuario no encontrado por email ni por username, intentándolo por id Long");
+                    }
+                    user = findById(Long.parseLong(identifier));
                 }
             }
         } catch (Exception e) {
@@ -179,4 +215,25 @@ public class UserServiceImp implements UserService {
         return user;    
     }
 
+    @Transactional(readOnly = true)
+    public UserExtractDto extractUserData(String identifier) {
+
+        try {
+            Optional<UserDto> user = findByAnyIdentifier(identifier);
+            if (user.isPresent()) {
+                String userId = user.get().getUsername();
+                List<FavoriteGameDto> favoriteGames = findAllUserGames(userId);
+                return new UserExtractDto(user.get(), favoriteGames);
+            } else {
+                log.warn("Usuario no encontrado para el identificador: {}", identifier);
+                return null;
+            }
+        } catch (Exception e) {
+            log.error("Error al extraer datos del usuario: {}", e.getMessage(), e);
+            return null;
+        }
+        
+    }
 }
+
+

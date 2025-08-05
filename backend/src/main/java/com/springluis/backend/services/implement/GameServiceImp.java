@@ -1,6 +1,8 @@
 package com.springluis.backend.services.implement;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -28,6 +31,7 @@ import com.springluis.backend.model.dto.UserDto;
 import com.springluis.backend.model.dto.api.rawg.RawgGame;
 import com.springluis.backend.model.dto.api.rawg.RawgGameDetails;
 import com.springluis.backend.model.dto.api.rawg.RawgResponse;
+import com.springluis.backend.model.entity.User;
 import com.springluis.backend.model.entity.FavoriteGame;
 
 @Slf4j
@@ -60,8 +64,11 @@ public class GameServiceImp implements GameService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<RawgGame> findAllGames(int page, int pageSize, String search) {
-        String url = UriComponentsBuilder.fromUriString("https://api.rawg.io/api/games")
+
+        try {
+            String url = UriComponentsBuilder.fromUriString("https://api.rawg.io/api/games")
                 .queryParam("key", apiKey)
                 .queryParam("page", page)
                 .queryParam("page_size", pageSize)
@@ -69,34 +76,73 @@ public class GameServiceImp implements GameService {
                 .toUriString();
 
         
-        if(log.isDebugEnabled()) {
-            log.debug("Fetching games from URL: {}", url);
+            if(log.isDebugEnabled()) {
+                log.debug("Fetching games from URL: {}", url);
+            }
+            
+            ResponseEntity<RawgResponse> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<RawgResponse>() {}
+            );
+
+            RawgResponse rawgResponse = response.getBody();
+            List<RawgGame> games = rawgResponse != null ? rawgResponse.getResults() : List.of();
+            int total = rawgResponse != null ? rawgResponse.getCount() : 0;
+
+            return new PageImpl<>(games, PageRequest.of(page - 1, pageSize), total);
+        } catch (Exception e) {
+            if (log.isErrorEnabled()) {
+                log.error("Error fetching games from Rawg API: {}", e.getMessage(), e);
+            }
+            return Page.empty();
         }
-        ResponseEntity<RawgResponse> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<RawgResponse>() {}
-        );
-
-        RawgResponse rawgResponse = response.getBody();
-        List<RawgGame> games = rawgResponse != null ? rawgResponse.getResults() : List.of();
-        int total = rawgResponse != null ? rawgResponse.getCount() : 0;
-
-        return new PageImpl<>(games, PageRequest.of(page - 1, pageSize), total);
+        
     }
 
     @Override
+    @Transactional(readOnly = false)
     public void addFavoriteGame(FavoriteGameDto dto, String userId) {
-        UserDto user = userService.findByAnyIdentifier(userId)
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        FavoriteGame game = gameMapper.toSource(dto);
-        game.setUser(userMapper.toSource(user));
-        favoriteGameRepository.save(game);
+        try {
+            UserDto userDto = userService.findByAnyIdentifier(userId)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        
+            User user = userMapper.toSource(userDto);
+
+            // Evitar duplicados
+            boolean gameExists = favoriteGameRepository.findByUserId(user.getId())
+                .stream()
+                .anyMatch(favGame -> favGame.getRawgId().equals(dto.getRawgId()));
+
+            Optional<FavoriteGame> favoriteGameAlreadyInDb = favoriteGameRepository.findByRawgId(dto.getRawgId());
+
+            if (gameExists) {
+                throw new IllegalStateException("El juego ya está en la lista de favoritos.");
+            }
+
+            FavoriteGame game;
+            if (favoriteGameAlreadyInDb.isPresent()) {
+                game = favoriteGameAlreadyInDb.get();
+            } else{
+                game = gameMapper.toSource(dto);
+            }
+            
+            game.setUser(user);
+            favoriteGameRepository.save(game);
+
+        } catch (Exception e) {
+            if (log.isErrorEnabled()) {
+                log.error("Error al agregar juego favorito: {}", e.getMessage(), e);
+            }
+            throw new RuntimeException("Error al agregar juego favorito: " + e.getMessage());
+        }
+        
     }
 
     @Override
+    @Transactional(readOnly = true)
     public RawgGameDetails findGameById(Long id) {
         String url = UriComponentsBuilder.fromUriString("https://api.rawg.io/api/games/{id}")
                 .queryParam("key", apiKey)
@@ -111,5 +157,24 @@ public class GameServiceImp implements GameService {
                 url, HttpMethod.GET, null, new ParameterizedTypeReference<RawgGameDetails>() {});
 
         return response.getBody();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FavoriteGameDto> findFavoritesByUserId(Long userId) {
+
+        try {
+            List<FavoriteGame> favorites = favoriteGameRepository.findByUserId(userId);
+            return favorites.stream()
+                    .map(gameMapper::toTarget)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            if (log.isErrorEnabled()) {
+                log.error("Error al buscar juegos favoritos del usuario {}: {}", userId, e.getMessage(), e);
+            }
+            return List.of();
+        }
+        
     }
 }

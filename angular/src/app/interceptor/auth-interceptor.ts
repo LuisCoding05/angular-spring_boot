@@ -2,6 +2,7 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../service/auth/auth-service';
 import { AppConstants } from '../const/app-constants';
+import { catchError, throwError } from 'rxjs';
 
 
 /**
@@ -13,17 +14,25 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const isPublic = AppConstants.API_PUBLIC_ENDPOINTS.some(endpoint => req.url.startsWith(endpoint));
 
-  if (authToken && !isPublic) {
-    const cloned = req.clone({
+  let request = req;
+  if (authToken && (!isPublic || req.url.includes("add-to-favorites"))) {
+    request = req.clone({
       setHeaders: {
         Authorization: `Bearer ${authToken}`
       }
     });
-    return next(cloned);
   }
 
-  // Si no hay token, la petición continúa sin modificarse.
-  return next(req);
+  return next(request).pipe(
+    catchError((error) => {
+      if (error.status === 401) {
+        // Por ejemplo, redirigir al login
+        authService.logout();
+        // O puedes limpiar el token, mostrar un mensaje, etc.
+      }
+      return throwError(() => error);
+    })
+  );
 };
 
 

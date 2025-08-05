@@ -41,8 +41,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/register").permitAll()
                 .requestMatchers("/api/auth/refresh").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
-                .requestMatchers("/api/games/**").permitAll()
-                // Endpoints protegidos
+                // Solo estos endpoints de juegos son públicos
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/games").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/games/{id}").permitAll()
                 .requestMatchers("/api/movies/**").authenticated()
                 .requestMatchers("/api/user/**").authenticated()
                 .anyRequest().authenticated()

@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { FavoriteGameDto } from '../../model/dto/FavoriteGameDto';
 import { GenericFetchService } from '../fetch/generic-fetch-service';
 import { BehaviorSubject } from 'rxjs';
 import { AppConstants } from '../../const/app-constants';
@@ -69,6 +70,13 @@ export class GameService {
   private fetchService = inject(GenericFetchService);
   private apiUrl = '/api/games';
 
+    /**
+   * Estado reactivo para la adición de juegos a favoritos
+   */
+  addFavoriteState = this.fetchService.createPostApiState<FavoriteGameDto, FavoriteGameDto>(
+    `${AppConstants.API_BASE_URL}${this.apiUrl}/add-to-favorites`
+  );
+
   /**
    * Estado reactivo para la lista de juegos RAWG con limitador de peticiones
    * Máximo 5 peticiones cada 10 segundos
@@ -121,5 +129,21 @@ export class GameService {
   loadGameDetails(id: number) {
     const url = `${AppConstants.API_BASE_URL}${this.apiUrl}/${id}`;
     return this.fetchService.createApiState<RawgGameDetails>(url, true);
+  }
+
+  addGameToFavorites(game: RawgGameDetails){
+    // Construir el DTO correctamente para el backend
+    const dto: FavoriteGameDto = {
+      id: 0,
+      rawgId: game.id,
+      title: game.name,
+      releaseDate: game.released,
+      backgroundImage: game.background_image,
+      rawgRating: game.rating,
+      platforms: game.platforms?.map((p: any) => p.platform?.name) ?? [],
+      // Puedes añadir más campos si tienes datos
+    };
+    this.addFavoriteState.post(dto);
+    return this.addFavoriteState.state$;
   }
 }

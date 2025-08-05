@@ -104,6 +104,12 @@
                       <a [routerLink]="['/game', game.id]" class="w-full text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 inline-block">
                         Ver detalles
                       </a>
+
+                      @if (authService.isLoggedIn()) {
+                        <button class="bg-green-500 hover:bg-green-600 text-white font-semibold px-5 py-2 rounded-xl shadow-lg mt-2 w-full" (click)="addToFavorites(game)">
+                          Añadir a Favoritos
+                        </button>
+                      }
                     </div>
                   </div>
                   <div class="mt-4 flex flex-wrap gap-2">
