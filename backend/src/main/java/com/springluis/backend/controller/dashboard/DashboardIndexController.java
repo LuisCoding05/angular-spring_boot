@@ -3,6 +3,7 @@ package com.springluis.backend.controller.dashboard;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import com.springluis.backend.services.implement.GameServiceImp;
-
+import com.springluis.backend.model.dto.error.PersonalizedErrorResponse;
 
 @RestController
 @RequestMapping("/api/dashboard/")
@@ -52,7 +53,7 @@ public class DashboardIndexController {
 
             Optional<UserDto> user = userService.findByUsername(username);
             if (!user.isPresent()) {
-                Map<String, Object> error = new java.util.HashMap<>();
+                Map<String, Object> error = new HashMap<>();
                 error.put("error", "Usuario no encontrado");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
             }
@@ -63,15 +64,13 @@ public class DashboardIndexController {
             Long userId = user.get().getId();
             List<FavoriteGameDto> favoriteGames = gameService.findFavoritesByUserId(userId);
 
-            Map<String, Object> response = new java.util.HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("user", user.get());
             response.put("favoriteGames", favoriteGames);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            Map<String, Object> error = new java.util.HashMap<>();
-            error.put("error", "Token inválido");
-            error.put("message", e.getMessage());
+            PersonalizedErrorResponse error = new PersonalizedErrorResponse("Token inválido", e.getMessage(), e.getClass().getName(), e.getStackTrace().toString());
             log.error("Error in DashboardIndexController: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }

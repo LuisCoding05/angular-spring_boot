@@ -1,5 +1,6 @@
 package com.springluis.backend.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -7,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.springluis.backend.model.entity.FavoriteGame;
 import com.springluis.backend.model.entity.User;
 
 @Repository
@@ -25,5 +27,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.email = :email")
     Optional<User> findByEmailWithRoles(@Param("email") String email);
+
+    @Query("SELECT g FROM FavoriteGame g WHERE g.user.id = :userId")
+    List<FavoriteGame> findUserGames(@Param("userId") Long userId);
 
 }

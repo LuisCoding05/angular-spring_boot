@@ -1,13 +1,14 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { AppConstants } from '../../const/app-constants';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private platformId = inject(PLATFORM_ID);
-
+  private router = inject(Router);
   isAuthenticated = signal(false);
   authToken = signal<string | null>(null);
   avatarUrl = signal<string | null>(null);
@@ -46,6 +47,7 @@ export class AuthService {
       this.avatarUrl.set(null);
       localStorage.removeItem('authToken');
       localStorage.removeItem('avatar');
+      this.router.navigate(['/login']);
     }
   }
 
